@@ -1,0 +1,13 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Python</title><style>body{font:16px system-ui;max-width:900px;margin:auto;padding:16px}input,button{padding:10px;margin:4px 0;font-size:1rem}table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #ccc;padding:6px;text-align:left;font-size:.9rem}.o{overflow-x:auto}</style></head><body><h1>Administration</h1>
+<input id="pw" type="password" placeholder="Mot de passe admin"><button onclick="ld()">Entrer</button><p id="s"></p>
+<h2>Nouveau code</h2><input id="n" placeholder="Nom de l'élève"><input id="p" placeholder="WhatsApp (ex. 22674426981)"><button onclick="gen()">Générer le code</button><p id="r"></p>
+<button onclick="ns()">Démarrer une nouvelle session (invalide tous les anciens accès)</button>
+<h2>Élèves</h2><div class="o"><table id="t"></table></div>
+<script>const P=()=>pw.value;const A=async o=>(await fetch('/api',{method:'POST',body:JSON.stringify({...o,pw:P()})})).json();
+async function ld(){const d=await A({a:'adm_list'});if(d.e)return s.textContent=d.e;s.textContent='Session en cours : '+d.session;
+t.innerHTML='<tr><th>Élève</th><th>Code</th><th>Statut</th><th>Examen</th><th></th></tr>'+d.rows.reverse().map(x=>`<tr><td>${x.name||''}</td><td>${x.code}</td><td>${x.revoked?'révoqué':x.session!==d.session?'ancienne session':x.used?'utilisé':'non utilisé'}</td><td>${x.passed?x.score+' % réussi':x.attempts+' tentative(s)'}</td><td><button onclick="rv('${x.code}')">Révoquer</button></td></tr>`).join('')}
+async function gen(){const d=await A({a:'adm_gen',name:n.value,phone:p.value});if(d.e)return r.textContent=d.e;
+const m=encodeURIComponent(`Bonjour ${n.value}, voici votre code d'accès unique à la formation Python : ${d.code}\nIl ne fonctionne qu'une seule fois, sur un seul appareil. Ne le partagez pas.`);
+r.innerHTML=`Code : <b>${d.code}</b> <a href="https://wa.me/${p.value.replace(/\D/g,'')}?text=${m}" target="_blank">Envoyer sur WhatsApp</a>`;ld()}
+async function rv(c){await A({a:'adm_revoke',code:c});ld()}
+async function ns(){if(confirm('Tous les codes et accès actuels seront invalidés. Continuer ?')){await A({a:'adm_newsession'});ld()}}</script></body></html>

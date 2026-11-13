@@ -1,0 +1,5 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vérification du certificat</title><style>body{font:17px/1.6 Georgia,serif;max-width:640px;margin:auto;padding:20px;color:#13233a}h1{color:#1f4e8c;font-family:Verdana,sans-serif}.ok{border:2px solid #12805c;border-radius:10px;padding:18px}li{margin:6px 0}</style></head><body><h1>Vérification du certificat</h1><div id="o">Vérification...</div><script>
+const id=new URLSearchParams(location.search).get('id');
+fetch('/api',{method:'POST',body:JSON.stringify({a:'verify',id})}).then(r=>r.json()).then(d=>{const o=document.getElementById('o'),e=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+if(d.e)return o.textContent=d.e;
+o.innerHTML=`<div class="ok"><b>Certificat authentique</b><p>${e(d.name)} a réussi l'examen final de la Spécialisation Python avec ${d.score} % le ${d.date}.</p><p><b>Compétences validées :</b></p><ul>${d.skills.map(s=>'<li>'+e(s)+'</li>').join('')}</ul><small>N° ${e(d.id)}</small></div>`})</script></body></html>
