@@ -4,7 +4,7 @@ export const config={path:"/api"};
 const J=(o,s=200)=>new Response(JSON.stringify(o),{status:s,headers:{"content-type":"application/json"}});
 const rnd=n=>Array.from(crypto.getRandomValues(new Uint8Array(n)),x=>"ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[x%32]).join("");
 export default async (req)=>{
-  const st=getStore("pyschool"),get=k=>st.get(k,{type:"json"}),set=(k,v)=>st.setJSON(k,v);
+  const st=getStore({name:"pyschool",consistency:"strong"}),get=k=>st.get(k,{type:"json"}),set=(k,v)=>st.setJSON(k,v);
   const b=await req.json().catch(()=>({})),a=b.a;
   const cfg=(await get("cfg"))||{session:"S1"};
   const admin=b.pw&&process.env.ADMIN_PASSWORD&&b.pw===process.env.ADMIN_PASSWORD;
