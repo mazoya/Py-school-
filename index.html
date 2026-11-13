@@ -29,26 +29,8 @@ print("Prix du maïs en juillet :", prix)</code></pre><a class="btn" href="https
 <form class="gate" id="f"><input id="k" type="password" placeholder="Votre code d'accès" autocomplete="off" aria-label="Code d'accès"><button class="btn" type="submit">Ouvrir la formation</button></form><div id="err" role="alert"></div></div>
 <main id="course" hidden><h2>Votre formation</h2><nav class="gate" style="justify-content:flex-start"><button class="btn" data-t="cours">Cours</button><button class="btn" data-t="exam">Examen final</button><button class="btn" data-t="cert">Certificat</button></nav><div id="v"></div></main><footer>Spécialisation Python. Le contenu du cours est verrouillé jusqu'au paiement.</footer></div>
 <script src="/qr.js"></script><script>
-const A=async o=>{const r=await fetch('/api',{method:'POST',body:JSON.stringify({...o,token:localStorage.pyt})});return [r.ok,await r.json()]};
+const A=async o=>{try{const r=await fetch('/api',{method:'POST',body:JSON.stringify({...o,token:localStorage.pyt})});return [r.ok,await r.json()]}catch(x){return [false,{e:'Le serveur ne répond pas. Réessayez dans un instant.'}]}};
 const $=s=>document.querySelector(s),V=$('#v'),er=$('#err');
 const open_=()=>{$('#course').hidden=false;show('cours')};
 async function show(t){V.innerHTML='Chargement...';
  if(t==='cours'){const[ok,d]=await A({a:'course'});if(!ok)return out(d.e);V.innerHTML=d.html}
- if(t==='exam'){const[ok,d]=await A({a:'exam'});if(!ok)return out(d.e);
-  V.innerHTML='<p>15 questions, 70 % pour réussir, 3 tentatives maximum.</p>'+d.q.map((x,i)=>`<div class="q"><b>${i+1}. ${esc(x.q)}</b>`+x.o.map((o,j)=>`<label><input type="radio" name="q${i}" value="${j}"> ${esc(o)}</label>`).join('')+'</div>').join('')+'<button class="btn" id="sb">Envoyer mes réponses</button><p id="res"></p>';
-  $('#sb').onclick=async()=>{const a=d.q.map((_,i)=>{const c=document.querySelector(`input[name=q${i}]:checked`);return c?+c.value:-1});
-   const[ok2,r]=await A({a:'submit',answers:a});$('#res').textContent=ok2?(r.passed?`Réussi : ${r.pct} %. Ouvrez l'onglet Certificat.`:`Score ${r.pct} %. Il faut 70 %. Tentative ${r.attempts}/3.`):r.e}}
- if(t==='cert'){const[ok,d]=await A({a:'cert'});if(!ok)return out(d.e);
-  V.innerHTML='<p>Bravo ! Saisissez votre nom complet tel qu\'il doit apparaître, puis téléchargez.</p><div class="gate" style="justify-content:flex-start"><input id="nm" placeholder="Prénom et nom"><button class="btn" id="dl">Télécharger mon certificat</button></div>';
-  $('#dl').onclick=async()=>{const n=$('#nm').value.trim();if(!n)return;await A({a:'cert',name:n});const q=qrcode(0,'M');q.addData(location.origin+'/verify.html?id='+d.id);q.make();const qr='<g transform="translate(78,630)">'+q.createSvgTag({cellSize:4,margin:0})+'</g>';
-   const svg=d.svg.replace('{{NAME}}',esc(n)).replace('{{SCORE}}',d.score).replace('{{DATE}}',d.date).replace('{{ID}}',d.id).replace('{{QR}}',qr);
-   const im=new Image();im.onload=()=>{const c=document.createElement('canvas');c.width=1200;c.height=850;c.getContext('2d').drawImage(im,0,0);
-    const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download='certificat-python.png';a.click()};
-   im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)}}}
-const out=m=>{V.textContent=m;if(/expir|Session/.test(m))delete localStorage.pyt};
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>show(b.dataset.t));
-$('#f').onsubmit=async ev=>{ev.preventDefault();er.textContent='';const[ok,d]=await A({a:'redeem',code:$('#k').value});
- if(!ok)return er.textContent=d.e;localStorage.pyt=d.token;open_()};
-if(localStorage.pyt)open_();
-</script></body></html>
