@@ -14,13 +14,22 @@ export default async (req)=>{
   if(a==="adm_list"){const idx=(await get("idx"))||[],rows=[];for(const c of idx)rows.push({code:c,...(await get("c/"+c))});return J({session:cfg.session,rows});}
   if(a==="adm_revoke"){const r=await get("c/"+b.code);if(r){r.revoked=true;await set("c/"+b.code,r);}return J({ok:1});}
   if(a==="adm_newsession"){cfg.session="S"+Date.now();await set("cfg",cfg);return J({session:cfg.session});}
+  if(a==="redeem"&&process.env.ADMIN_PASSWORD&&String(b.code||"").trim()===process.env.ADMIN_PASSWORD){const t=rnd(32);await set("t/"+t,{admin:true,at:Date.now()});return J({token:t,name:"Administrateur"});}
   if(a==="redeem"){const c=String(b.code||"").trim().toUpperCase(),r=await get("c/"+c);
-    if(!r||r.used||r.revoked||r.session!==cfg.session)return J({e:"Code invalide, déjà utilisé ou expiré. Demandez un nouveau code à l'administrateur."},403);
+    if(!r||r.revoked)return J({e:"Code invalide."},403);
+    if(r.session!==cfg.session)return J({e:"Code expiré. Demandez un nouveau code à l'administrateur."},403);
+    if(r.used)return J({e:"Code déjà utilisé. Demandez un nouveau code à l'administrateur."},403);
     r.used=true;r.usedAt=Date.now();const t=rnd(32);await set("c/"+c,r);await set("t/"+t,{code:c});return J({token:t,name:r.name});}
   if(a==="verify"){const r=await get("c/"+String(b.id||"").toUpperCase());
     if(!r||!r.passed||r.revoked)return J({e:"Certificat introuvable ou non valide."},404);
     return J({name:r.certName||r.name,score:r.score,date:new Date(r.passedAt).toLocaleDateString("fr-FR"),id:b.id,skills:SKILLS});}
   const t=b.token&&await get("t/"+b.token),c=t?.code,r=c&&await get("c/"+c);
+  if(t?.admin){if(Date.now()-t.at>43200000)return J({e:"Session expirée : reconnectez-vous avec votre mot de passe admin."},403);
+    const ok=()=>EXAM.filter((x,i)=>b.answers?.[i]===x[2]).length;
+    if(a==="course")return J({html:COURSE});
+    if(a==="exam")return J({q:EXAM.map(([q,o])=>({q,o})),attempts:0,passed:false});
+    if(a==="submit"){const pct=Math.round(ok()*100/EXAM.length);return J({pct,passed:pct>=70,attempts:0});}
+    if(a==="cert")return J({svg:CERT,score:100,date:new Date().toLocaleDateString("fr-FR"),id:"ADMIN-APERCU"});}
   if(!r||r.revoked||r.session!==cfg.session)return J({e:"Session expirée : demandez un nouveau code."},403);
   if(a==="course")return J({html:COURSE});
   if(a==="exam")return J({q:EXAM.map(([q,o])=>({q,o})),attempts:r.attempts||0,passed:!!r.passed});
